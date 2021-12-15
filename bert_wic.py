@@ -85,7 +85,7 @@ if __name__ == '__main__':
 		required=True,
 		help='The absolute path to the directory containing the WiC eval files.'
 	)
-	# Write your predictions (F or T, separated by newlines) for each evaluation
+	# I am writing predictions (F or T, separated by newlines) for each evaluation
 	# example to out_file in the same order as you find them in eval_dir.  For example:
 	# F
 	# F
@@ -106,45 +106,6 @@ if __name__ == '__main__':
     word_dict_train = get_wic_subset(args.train_dir)
     word_dict_test = get_wic_subset(args.eval_dir)
 
-
-# When the TAs run the script are the command line arguments going to be formatted 
-# such that this is correct?
-######
-
-
-    # or this:
-    # word_dict_train = get_wic_subset(args.train_dir )
-    # word_dict_test = get_wic_subset(args.eval_dir )
-    #######################################################
-
-
-    # =============================================================================
-    # N = len(word_dict_train)
-    # sent_list_form_train = []
-    # sent_list_form_test = []
-    # sent_concat_train = []
-    # sent_concat_test = []
-    # y_train = []
-    # y_test = []
-    # 
-    # for i in range(N):
-    #     sent_list_form_train.append(word_dict_train[i]['sentence1_words'])
-    #     sent_list_form_train.append(word_dict_train[i]['sentence2_words'])
-    #     sent_concat_train.append(" ".join(word_dict_train[i]['sentence1_words']))
-    #     sent_concat_train.append(" ".join(word_dict_train[i]['sentence2_words']))
-    # 
-    #     y_train.append(word_dict_train[i]['label'])
-    #     
-    #   
-    # y_train = np.array(y_train)
-    # for i in range(len(word_dict_test)):
-    #     sent_list_form_test.append(word_dict_test[i]['sentence1_words'])
-    #     sent_list_form_test.append(word_dict_test[i]['sentence2_words'])
-    #     sent_concat_test.append(" ".join(word_dict_test[i]['sentence1_words']))
-    #     sent_concat_test.append(" ".join(word_dict_test[i]['sentence2_words']))
-    #     y_test.append(word_dict_test[i]['label'])
-    # 
-    # =============================================================================
 
 
 
