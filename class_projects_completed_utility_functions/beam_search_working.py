@@ -5,7 +5,8 @@ Created on Tue Jan  4 10:33:46 2022
 @author: 16028
 """
 
-
+import numpy as np
+import torch
 def image_beam_decoder(_word_to_id, _id_to_word, _caption_model, _max_len, _device, n, _enc_image):
   def words_to_ids(sequence):
     return [_word_to_id[word] for word in sequence]
@@ -52,32 +53,17 @@ def image_beam_decoder(_word_to_id, _id_to_word, _caption_model, _max_len, _devi
       top_n_id_array[i] = torch.topk(logits_list, beam_width).indices
       top_n_probs_array[i] = torch.topk(logits_list, beam_width).values
 
-      # top_n_probs_array[i] = np.array(torch.topk(logits_list,beam_width).values.cpu())
-      
-      # top_n_probs_array[i] = torch.topk(logits_list,beam_width).values.detach().cpu().numpy()
-      ####
-
-
-    # print(top_n_id_array)
-    # print('heyooo')
     v, i = torch.topk(top_n_probs_array.flatten(), N)
 
-    # print(np.array(np.unravel_index(i.numpy(), top_n_probs_array.shape)).T)
-
     row_col = np.array(np.unravel_index(i.numpy(), top_n_probs_array.shape)).T
-    # print(row_col)
-    # idx = np.argsort(top_n_probs_array.ravel())[-N:][::-1]
-    # topN_val = top_n_probs_array.ravel()[idx]
-    # row_col = np.c_[np.unravel_index(idx, top_n_probs_array.shape)]
+
     # # https://stackoverflow.com/questions/46554647/returning-the-n-largest-values-indices-in-a-multidimensional-array-can-find-so
     # citing the above for above lines picking out the top N across 2d array
 
     topns = torch.zeros((N),dtype=torch.int32 )
     old_sequences = sequences.copy()
     sequences = []
-    # print(top_n_id_array)
-    # print('the shape:')
-    # print(top_n_id_array.shape)
+
     for i in range(N):
         # print('before the hey')
         topns[i] = top_n_id_array[row_col[i,0],row_col[i,1]]
@@ -86,12 +72,8 @@ def image_beam_decoder(_word_to_id, _id_to_word, _caption_model, _max_len, _devi
           sequences.append(old_sequences[i] + [topns[i].item()])
         else:
           # print('one done!')
-          # print(old_sequences[i])
-          # print(_id_to_word[topns[i].item()])
           old_sequences[i].append(topns[i].item())
  
-
-          # print(ids_to_words(old_sequences[i] )) #why did i need to cast this?
           N = N - 1
           num_done = num_done + 1
           final_candidates.append(old_sequences[i])
