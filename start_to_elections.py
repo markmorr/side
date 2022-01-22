@@ -9,6 +9,8 @@ from __future__ import unicode_literals, print_function, division
 from io import open
 import glob
 import os
+import torch
+
 
 import pandas as pd
 import numpy as np
@@ -62,14 +64,13 @@ def plotCM(cm_, title_):
             plt.title(title_)
     plt.show()
     
-    
 
 def runModels(X,y):
     
-    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2)
-    clf_list = [DecisionTreeClassifier(random_state=0,),
-    RandomForestClassifier(random_state=0, max_depth=15),
-    LogisticRegression(random_state=0, max_iter=10000)]
+    X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2, random_state=10)
+    clf_list = [DecisionTreeClassifier(random_state=10,),
+    RandomForestClassifier(random_state=10, max_depth=15),
+    LogisticRegression(random_state=10, max_iter=10000)]
     for clf in clf_list:
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
@@ -92,7 +93,9 @@ df = pd.read_csv(r'C:\Users\16028\Downloads\house_76_thru_2020\1976-2020-house.c
 with open(r'C:\Users\16028\Downloads\house_76_thru_2020\1976-2020-house.csv') as f:
     print(f)
 
+da[['office', 'stage', 'runoff', 'special', 'writein']].value_counts()
 
+da.writein.value_counts()
 
 df_filtered = df.groupby(['year', 'state', 'district'])
 
@@ -106,7 +109,7 @@ for name, group in df_filtered:
 
 
 df = df[['year', 'state', 'district', 'office', 'stage', 'runoff', 'special', 'candidate', 
-         'party', 'candidatevotes', 'totalvotes', 'unofficial', 'version', 'fusion_ticket']]
+         'party', 'candidatevotes', 'totalvotes', 'unofficial', 'version', 'writein', 'fusion_ticket']]
 df['state'] = df['state'].str.lower()
 # df['winner'] = df_filtered['candidatevotes'].transform('max')['candidate']
 idx = df_filtered['candidatevotes'].transform('max') == df['candidatevotes']
@@ -123,13 +126,15 @@ df = df[df['vote_pct'] > .05]
 duo = df.groupby(['year', 'state', 'district']).filter(lambda x:len(x)==2)
 duo.reset_index(inplace=True)
 
+da.fusion_ticket.value_counts()
 
 df = duo.copy()
 df_dems = df[df['party'] == 'DEMOCRAT']
 df_non_dems = df[df['party'] != 'DEMOCRAT']
 df_m1_alt = df_dems.merge(df_non_dems, left_on=['year', 'state', 'district'], right_on = ['year', 'state', 'district'])
 
-df2 = df_m1_alt[['year', 'state', 'district', 'candidate_x', 'candidate_y', 'party_x',
+df2 = df_m1_alt[['year', 'state', 'district', 'writein_x', 'writein_y', 'fusion_ticket_x', 'fusion_ticket_y',
+                 'candidate_x', 'candidate_y', 'party_x',
                  'party_y', 
                  'candidatevotes_x', 'candidatevotes_y', 'totalvotes_x','vote_pct_x','vote_pct_y',
                  'winners_fixed_x']]
@@ -171,20 +176,58 @@ print('here')
 df['party_x_bin']= df['party_x'].apply(binarize_party)
 df['party_y_bin']= df['party_y'].apply(binarize_party)
 
+
+df[(df.party_x_bin == 1) & (df.y == 1)].shape
+df.shape 
+
+df = df[(df['candidate_x'].notnull()) & (df['candidate_y'].notnull())]
+
+
 df['vote_diff'] = df['candidatevotes_x'] - df['candidatevotes_y']
 X = df[['candidatevotes_x', 'candidatevotes_y', 'vote_diff','party_x_bin', 'party_y_bin']]
 y = df['y']
-X = df[['candidate_x', 'candidate_y', '']]
 X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2, random_state=0)
-
 runModels(X,y)
 
-df.y.value_counts()
+
+df.writein_x.value_counts()
+df.writein_y.value_counts()
+df.fusion_ticket_x.value_counts()
+df.fusion_ticket_y.value_counts()
+175/7900
+# state_to_region =  {k.lower(): v for k, v in state_to_region.items()}
+# df['region'] = df['state'].map(state_to_region)
+#state only is doing best? logistic regression is learning; deicsion tree is not
+#set up a logging system for testing?
+#region hurt
+# abbrev_to_us_state = dict(map(reversed, us_state_to_abbrev.items()))
 
 
-df[(df.party_x_bin == 1) & (df.y == 1)].shape
+ #DOES THIS MATTER?
+# should i scramble the order so its not always x is democrat right is republican??
+
+df['year_delta'] = df['year'] - 1976
+one_hot_data = pd.get_dummies(df[['state', ]],drop_first=False) #probably negligible
+numeric_data = df[['year_delta',]]
+numeric_data.shape
+X = pd.concat([numeric_data, one_hot_data], axis=1)
+runModels(X,y)
+#588, 616, 621
+#588, 614, 621
+df.y.value_counts()[1]/(df.y.value_counts()[0]+df.y.value_counts()[1])
+
+
+one_hot_data = pd.get_dummies(df[['state', 'fusion_ticket_x', 'fusion_ticket_y' ]],drop_first=False) #probably negligible
+numeric_data = df[['year_delta', ]]
+numeric_data.shape
+X = pd.concat([numeric_data, one_hot_data], axis=1)
+runModels(X,y)
+
+df2 = df.copy()
+df = pd.concat([df2.drop('state', axis=1), one_hot_data], axis=1)
+
 df.shape
-
+df2.shape
 def getWinningName(row):
     if row['y'] == 1:
         return row['candidate_x']
@@ -197,9 +240,12 @@ def getLosingName(row):
     else:
         return row['candidate_x']
     
-
-X = df[['candidate_x', 'candidate_y',]]
-X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2, random_state=0)
+# X = pd.concat(df[['candidate_x', 'candidate_y']])
+# X = df[['candidate_x', 'candidate_y',]']
+X_train, X_test, y_train, y_test = train_test_split(df.drop(columns=['y']),df['y'], test_size=.2, random_state=0)
+old_train_index, old_test_index = X_train.index, X_test.index
+X_train.reset_index(drop=True, inplace=True)
+y_train.reset_index(drop=True, inplace=True)
 
 vadded = pd.concat([X_train, y_train], axis=1)
 
@@ -219,53 +265,6 @@ def categorizeNames(df__, y_values):
     return wn, ln
 w1, l1 = categorizeNames(X_train, y_train)
 
-
-
-# state_to_region =  {k.lower(): v for k, v in state_to_region.items()}
-# df['region'] = df['state'].map(state_to_region)
-
-df['year_delta'] = df['year'] - 1976
-one_hot_data = pd.get_dummies(df[['state']],drop_first=False) #probably negligible
-numeric_data = df[['year_delta', 'party_x_bin', 'party_y_bin']] #DOES THIS MATTER?
-# do i need to double every column because its for the x candidate and the y candidate? 
-# should i scramble the order so its not always x is democrat right is republican??
-# hmmm??
-numeric_data.shape
-X = pd.concat([numeric_data, one_hot_data], axis=1)
-runModels(X,y)
-
-df.y.value_counts()[1]/(df.y.value_counts()[0]+df.y.value_counts()[1])
-
-
-one_hot_data = pd.get_dummies(df[['region', ]],drop_first=False) #probably negligible
-numeric_data = df[['year_delta']]
-numeric_data.shape
-X = pd.concat([numeric_data, one_hot_data], axis=1)
-runModels(X,y)
-
-
-one_hot_data = pd.get_dummies(df[['state', ]],drop_first=False) #probably negligible
-numeric_data = df[['year_delta']]
-numeric_data.shape
-X = pd.concat([numeric_data, one_hot_data], axis=1)
-runModels(X,y)
-
-from sklearn.ensemble import RandomForestClassifier
-clf = RandomForestClassifier(max_depth=2, random_state=0)
-#state only is doing best? logistic regression is learning; deicsion tree is not
-#set up a logging system for testing?
-
-#region hurt
-
-# abbrev_to_us_state = dict(map(reversed, us_state_to_abbrev.items()))
-
-
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jan  8 16:58:31 2022
-
-@author: 16028
-"""
 
 
 ##################################################################################
@@ -299,25 +298,33 @@ print(unicodeToAscii('Ślusàrski'))
 category_lines = {}
 all_categories = []
 
+
 # Read a file and split into lines
 def readLines(filename):
     lines = open(filename, encoding='utf-8').read().strip().split('\n')
     return [unicodeToAscii(line) for line in lines]
 
-for filename in findFiles('data/names/*.txt'):
-    category = os.path.splitext(os.path.basename(filename))[0]
-    all_categories.append(category)
-    lines = readLines(filename)
-    category_lines[category] = lines
+# =============================================================================
+# for filename in findFiles('data/names/*.txt'):
+#     category = os.path.splitext(os.path.basename(filename))[0]
+#     all_categories.append(category)
+#     lines = readLines(filename)
+#     category_lines[category] = lines
+# =============================================================================
 
+###################################################
+category_lines['win'] = w1
+category_lines['lose'] = l1
+all_categories = ['win', 'lose']
 n_categories = len(all_categories)
+###################################################
 
 #################################################################################
 
-print(category_lines['Italian'][:5])
+print(category_lines['win'][:5])
 
 #################################################################################
-import torch
+
 
 # Find letter index from all_letters, e.g. "a" = 0
 def letterToIndex(letter):
@@ -395,14 +402,18 @@ import random
 def randomChoice(l):
     return l[random.randint(0, len(l) - 1)]
 
+ay = category_lines['lose']
+
 def randomTrainingExample():
     category = randomChoice(all_categories)
     line = randomChoice(category_lines[category])
+    # print(line)
     category_tensor = torch.tensor([all_categories.index(category)], dtype=torch.long)
     line_tensor = lineToTensor(line)
     return category, line, category_tensor, line_tensor
 
 for i in range(10):
+    print
     category, line, category_tensor, line_tensor = randomTrainingExample()
     print('category =', category, '/ line =', line)
   
@@ -529,7 +540,7 @@ plt.show()
 ####################################################################################
 
 
-def predict(input_line, n_predictions=3):
+def predict(input_line, n_predictions=2): #changed n_predictions from 3 to 2
     print('\n> %s' % input_line)
     with torch.no_grad():
         output = evaluate(lineToTensor(input_line))
@@ -543,9 +554,149 @@ def predict(input_line, n_predictions=3):
             category_index = topi[0][i].item()
             print('(%.2f) %s' % (value, all_categories[category_index]))
             predictions.append([value, all_categories[category_index]])
+            
+            
+            
+            
+            
+import numpy as np         
+            
+def getPrediction(input_line, n_predictions=2): #changed n_predictions from 3 to 2
+    # print('\n> %s' % input_line)
+    with torch.no_grad():
+        output = evaluate(lineToTensor(input_line))
+        # print(output)
+        # Get top N categories
+        topv, topi = output.topk(n_predictions, 1, True)
+        # print(topi)
+        predictions = []
+        return (np.exp(output[0][0].item()))#, np.exp(output[0][1].item()))
+    
+    
+def collectAllPredictions(test_set, n_predictions=2):
+    tuples_list = []
+    for index,row in test_set.iterrows():
+        tuples_list.append((row['candidate_x'], getPrediction(row['candidate_x']),row['candidate_y'], getPrediction(row['candidate_y']),
+                                                ))
+    return tuples_list
 
-predict('Dovesky')
+
+test_set = X_test
+rnn_preds = collectAllPredictions(test_set)
+#check if order of names still matches
+rnn_preds
+
+df_output = pd.DataFrame(rnn_preds, columns=['candidate_x', 'candidate_x_name_score', 'candidate_y', 'candidate_y_name_score'])
+df_output['name_score_diff'] = df_output['candidate_x_name_score'] - df_output['candidate_y_name_score']
+df_output['y'] = y_train
+
+df_output.shape
+y_test.shape
+subset_name = df_output[['name_score_diff', 'candidate_x_name_score', 'candidate_y_name_score', 'year_delta']] 
+runModels(subset_name, y_test)
+X_test.reset_index(drop=True).head()
+X_test.shape
+finalized_subset = pd.concat([subset_name, X_test.reset_index(drop=True)], axis=1)
+
+df_output.shape
+df.shape
+len(rnn_preds)
+X_test.shape
+
+train_set = X_train
+rnn_train_preds = collectAllPredictions(X_train)
+
+df_train_output = pd.DataFrame(rnn_train_preds, columns=['candidate_x', 'candidate_x_name_score', 'candidate_y', 'candidate_y_name_score'])
+df_train_output['name_score_diff'] = df_train_output['candidate_x_name_score'] - df_train_output['candidate_y_name_score']
+# df_train_output['y'] = y_train
+
+subset_train_name = df_train_output[['name_score_diff', 'candidate_x_name_score', 'candidate_y_name_score']] 
+finalized_train_subset = pd.concat([subset_train_name, X_train.reset_index(drop=True)], axis=1)
+
+
+finalized_subset.columns
+# checking_this = pd.concat(subset_name, X_train[['state']])
+
+# runModel(X,y)
 predict('Jackson')
 predict('Satoshi')
+predict('Krcatovic')
 
+my_data_dir = 'model_states/'
+torch.save(rnn.state_dict(), os.path.join(my_data_dir, "rnn_model.pt"))
+# caption_model.load_state_dict(torch.load(os.path.join(my_data_dir, "outputs/rnn_model.pt")))
+
+# caption_model = caption_model.to(device).eval()
+
+finalized_train_subset.drop(columns=['candidate_x', 'candidate_y'], inplace=True)
+finalized_subset.drop(columns=['candidate_x', 'candidate_y'], inplace=True)
+
+X_test_subsetted = finalized_subset.drop(columns=['year', 'district', 'writein_x', 'writein_y',
+ 'party_x',
+                                                  'party_y', 'party_x_bin', 'party_y_bin',
+                                                  'candidatevotes_x', 'candidatevotes_y',
+                                                  'vote_diff', 'totalvotes_x','vote_pct_x',
+                                                  'vote_pct_y', 'winners_fixed_x'])
+
+X_test_subsetted.columns
+X_train_subsetted = finalized_train_subset.drop(columns=['year', 'district', 'writein_x', 'writein_y',
+ 'party_x',
+                                                  'party_y', 'party_x_bin', 'party_y_bin',
+                                                  'candidatevotes_x', 'candidatevotes_y',
+                                                  'vote_diff', 'totalvotes_x','vote_pct_x',
+                                                  'vote_pct_y', 'winners_fixed_x'])
+
+# X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2, random_state=10)
+clf_list = [DecisionTreeClassifier(random_state=10,),
+RandomForestClassifier(random_state=10, max_depth=15)]
+# LogisticRegression(random_state=10, max_iter=10000)]
+
+X_train_subsetted_2 = X_train_subsetted.drop(columns=[ 'candidate_y_name_score','name_score_diff'   ]) #
+X_test_subsetted_2 = X_test_subsetted.drop(columns=[ 'candidate_y_name_score', 'name_score_diff']) #
+
+#baseline for only giving them name_score_diff: 69.9 DT and 69.4 RF
+#giving them name_score_diff and candidate_x_score: 
+#keeping all 3: 66 DT and 67 RF
+# keep name_diff only: 60.9 DT and 62.4 RF
+# keep name_diff and one of them: about ~65 for both cases, both models
+# keep candidate_x and candidate_y (but not diff): 69.9 DT and 69.4 RF
+#keep only candidate_y_score: weirdly high. 78.5 DT and 68 RF.
+#keep only candidate_x_score: weirdly high. 75 DT and 69.7 RF.
+#dropping all 3: 60.6 DT and 62.9 RF
+
+
+for clf in clf_list:
+    clf.fit(X_train_subsetted_2, y_train)
+    y_pred = clf.predict(X_test_subsetted_2)
+    training_pred = clf.predict(X_train_subsetted_2)
+    cm = confusion_matrix(y_test, clf.predict(X_test_subsetted_2))
+    title = clf.__class__.__name__
+    print(title)
+    # plotCM(cm, title + ' on Testing Data')
+    print("Balanced accuracy score: ",balanced_accuracy_score(y_test,y_pred))
+    print('Training score: ', accuracy_score(y_train,training_pred))
+    print('Test Score: ', accuracy_score(y_test,y_pred))
+    print('\n')
+    # tree.plot_tree(clf()
+print('\n')   
+    
+    
+################################################################################
+for clf in clf_list:
+    clf.fit(X_train_subsetted, y_train)
+    y_pred = clf.predict(X_test_subsetted)
+    training_pred = clf.predict(X_train_subsetted)
+    cm = confusion_matrix(y_test, clf.predict(X_test_subsetted))
+    title = clf.__class__.__name__
+    print(title)
+    # plotCM(cm, title + ' on Testing Data')
+    print("Accuracy score: ",accuracy_score(y_test,y_pred))
+    print("Balanced accuracy score: ",balanced_accuracy_score(y_test,y_pred))
+    print('Training score: ', accuracy_score(y_train,training_pred))
+    print('Test Score: ', accuracy_score(y_test,y_pred))
+    print('\n')
+    # tree.plot_tree(clf()
+
+
+###################################################################################
 
