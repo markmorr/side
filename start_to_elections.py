@@ -657,12 +657,16 @@ X_test_subsetted_2 = X_test_subsetted.drop(columns=[ 'candidate_y_name_score', '
 #baseline for only giving them name_score_diff: 69.9 DT and 69.4 RF
 #giving them name_score_diff and candidate_x_score: 
 #keeping all 3: 66 DT and 67 RF
-# keep name_diff only: 60.9 DT and 62.4 RF
 # keep name_diff and one of them: about ~65 for both cases, both models
-# keep candidate_x and candidate_y (but not diff): 69.9 DT and 69.4 RF
+# keep candidate_x and candidate_y (but not diff): 69.9 DT and 69.4 RF #why would this not be better?
+#doesn't make a ton of sense that having both candidate scores brings it down as compared
+# to having just one of them (and both individual adds perform a little better?)
+#check--i guess that means they're highly correlated? 
+#perform dataset normalization?
+# keep name_diff only: 60.9 DT and 62.4 RF
 #keep only candidate_y_score: weirdly high. 78.5 DT and 68 RF.
 #keep only candidate_x_score: weirdly high. 75 DT and 69.7 RF.
-#dropping all 3: 60.6 DT and 62.9 RF
+#keeping none: 60.6 DT and 62.9 RF
 
 
 for clf in clf_list:
