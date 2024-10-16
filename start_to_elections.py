@@ -89,16 +89,10 @@ def runModels(X,y):
 
 
 df = pd.read_csv(r'C:\Users\16028\Downloads\house_76_thru_2020\1976-2020-house.csv', encoding='unicode_escape')
-
 with open(r'C:\Users\16028\Downloads\house_76_thru_2020\1976-2020-house.csv') as f:
     print(f)
 
-da[['office', 'stage', 'runoff', 'special', 'writein']].value_counts()
-
-da.writein.value_counts()
-
 df_filtered = df.groupby(['year', 'state', 'district'])
-
 i = 0
 for name, group in df_filtered:
     if i < 10:
@@ -111,35 +105,11 @@ for name, group in df_filtered:
 df = df[['year', 'state', 'district', 'office', 'stage', 'runoff', 'special', 'candidate', 
          'party', 'candidatevotes', 'totalvotes', 'unofficial', 'version', 'writein', 'fusion_ticket']]
 df['state'] = df['state'].str.lower()
-# df['winner'] = df_filtered['candidatevotes'].transform('max')['candidate']
 idx = df_filtered['candidatevotes'].transform('max') == df['candidatevotes']
 df['winners'] = df[idx]['candidate']
-
 df['winners_fixed'] = df.groupby(['year', 'state', 'district'])['winners'].apply(lambda x: x.ffill().bfill())
-
-
 df['vote_pct'] = df['candidatevotes']/df['totalvotes']
-
-df = df[df.stage == 'gen']
-df = df[df['vote_pct'] > .05]
-
-duo = df.groupby(['year', 'state', 'district']).filter(lambda x:len(x)==2)
-duo.reset_index(inplace=True)
-
-da.fusion_ticket.value_counts()
-
-df = duo.copy()
-df_dems = df[df['party'] == 'DEMOCRAT']
-df_non_dems = df[df['party'] != 'DEMOCRAT']
-df_m1_alt = df_dems.merge(df_non_dems, left_on=['year', 'state', 'district'], right_on = ['year', 'state', 'district'])
-
-df2 = df_m1_alt[['year', 'state', 'district', 'writein_x', 'writein_y', 'fusion_ticket_x', 'fusion_ticket_y',
-                 'candidate_x', 'candidate_y', 'party_x',
-                 'party_y', 
-                 'candidatevotes_x', 'candidatevotes_y', 'totalvotes_x','vote_pct_x','vote_pct_y',
-                 'winners_fixed_x']]
-
-
+    
 def binarize_result(row):
     x_won_flag = False
     if row['candidatevotes_x'] > row['candidatevotes_y']:
@@ -157,12 +127,6 @@ def binarize_result(row):
         return 0
     else:
         return 2
-# df['y'] = df[['party_x', 'party_y', 'candidatevotes_x', 'candidatevotes_y']].apply(binarize_result)
-
-df2['y']= df2.apply(binarize_result, axis=1)
-# df.columns
-df2 = df2[df2.y != 2] #for now we'll ignore error cases, again filtering
-df = df2.copy()
 
 
 def binarize_party(x):
@@ -172,18 +136,14 @@ def binarize_party(x):
         return 0
     else:
         return 0 #DEFAULTING TO NON-STANDARD MEANS REPUBLICAN
-print('here')
+
 df['party_x_bin']= df['party_x'].apply(binarize_party)
 df['party_y_bin']= df['party_y'].apply(binarize_party)
-
-
 df[(df.party_x_bin == 1) & (df.y == 1)].shape
 df.shape 
-
 df = df[(df['candidate_x'].notnull()) & (df['candidate_y'].notnull())]
-
-
 df['vote_diff'] = df['candidatevotes_x'] - df['candidatevotes_y']
+
 X = df[['candidatevotes_x', 'candidatevotes_y', 'vote_diff','party_x_bin', 'party_y_bin']]
 y = df['y']
 X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=.2, random_state=0)
@@ -194,7 +154,7 @@ df.writein_x.value_counts()
 df.writein_y.value_counts()
 df.fusion_ticket_x.value_counts()
 df.fusion_ticket_y.value_counts()
-175/7900
+
 # state_to_region =  {k.lower(): v for k, v in state_to_region.items()}
 # df['region'] = df['state'].map(state_to_region)
 #state only is doing best? logistic regression is learning; deicsion tree is not
@@ -225,9 +185,9 @@ runModels(X,y)
 
 df2 = df.copy()
 df = pd.concat([df2.drop('state', axis=1), one_hot_data], axis=1)
-
 df.shape
 df2.shape
+
 def getWinningName(row):
     if row['y'] == 1:
         return row['candidate_x']
@@ -592,7 +552,7 @@ df_output['y'] = y_train
 
 df_output.shape
 y_test.shape
-subset_name = df_output[['name_score_diff', 'candidate_x_name_score', 'candidate_y_name_score', 'year_delta']] 
+subset_name = df_output[['name_score_diff', 'candidate_x_name_score', 'candidate_y_name_score']] #, 'year_delta'
 runModels(subset_name, y_test)
 X_test.reset_index(drop=True).head()
 X_test.shape
