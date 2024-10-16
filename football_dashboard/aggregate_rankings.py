@@ -15,28 +15,14 @@ import os
 import re 
 
 
-xy = "This is a sentence. (once a day) [twice a day]"
-re.sub("[\(\[].*?[\)\]]", "", xy)
-
-print(os.getcwd())
-
-punct = '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{}~'   # `|` is not present here
-transtab = str.maketrans(dict.fromkeys(punct, ''))
-
-
-
-
-
 df_dict = dict()
 ###########################################
-# was 12_13
 # date_old_to_use = "11_28_2023"
-date_to_use = "10_6_2024"
+# date_to_use = "10_6_2024"
+date_to_use = "2024_10_16"
 ratcliffe_date_to_use = date_to_use
 boone_date_to_use = date_to_use
 ############################################
-
-# google_drive_id = 
 
 
 ecr_weight = .17 #23
@@ -44,45 +30,8 @@ wolf_weight = .21 # 26
 fitz_weight = .08 #decay this now--check week-to-week change. likely not updating
 boone_weight = .26 #.26
 e_q_weight = .17 # this is the weaker ecr
-jahnke_weight = .21
-ratcliffe_weight = .20 # was .14, make higher now that year almost over
-
-# URL = "https://realpython.github.io/fake-jobs/"
-# page = requests.get(URL)
-# print(page.text)
-
-#  14*.25 + 10.6*.22 + 13*.06 + 8.5*.25 + 6*.19 + 3*.16 + 10*.13
-     #  25 + 22 + 6+ 25 + 19 + 13 + 16
-# 11.657/1.26
-# df_dict['boone'][:95]
-# 84*.75
-# url = "https://www.pff.com/news/fantasy-football-rest-of-season-rankings-following-nfl-week-5"
-# page = requests.get(url)
-# print(page.text)
-# internal = page.text
-# soup = BeautifulSoup(page.content, "html.parser")
-# results = soup.find(id="ResultsContainer")
-# print(results.prettify())
-# page.text
-
-# job_elements = results.find_all("div", class_="card-content")
-
-# for job_element in job_elements:
-#     print(job_element, end="\n"*2)
-    
-    
-# for job_element in job_elements:
-#     title_element = job_element.find("h2", class_="title")
-#     company_element = job_element.find("h3", class_="company")
-#     location_element = job_element.find("p", class_="location")
-#     print(title_element)
-#     print(company_element)
-#     print(location_element)
-#     print()
-    
-# # under end google manager, <div id="app">
-# #just doing inspect to right click works as well
-# # df = pd.read_csv(r'C:\Users\16028\OneDrive\Documents\football_analytics\ratcliffe_flex_9_30.csv')
+jahnke_weight = 0
+ratcliffe_weight = 0 # was .14, make higher now that year almost over
 
 
 
@@ -93,7 +42,6 @@ base_path = r'C:\Users\16028\OneDrive\Documents\football_analytics'
 # wolf['name'] = wolf['name'].str.replace("[\(\[].*?[\)\]]", "", regex=True)
 
 
-# dateyy_to_use = "11_15"
 # date_old_to_use = "12_6"
 dfd_rb = pd.read_csv(base_path + '\\boone_rb_' + boone_date_to_use + '.csv')
 dfd_wr = pd.read_csv(base_path + '\\boone_wr_' + boone_date_to_use + '.csv')
@@ -101,20 +49,15 @@ dfd_te = pd.read_csv(base_path + '\\boone_te_' + boone_date_to_use + '.csv')
 dfd_qb = pd.read_csv(base_path + '\\boone_qb_' + boone_date_to_use + '.csv')
 
 
-# dfd_rb = pd.read_csv(base_path + '\\boone_rb_' + date_to_use + '.csv')
-# dfd_wr = pd.read_csv(base_path + '\\boone_wr_' + date_to_use + '.csv')
-# dfd_te = pd.read_csv(base_path + '\\boone_te_' + date_to_use + '.csv')
-# dfd_qb = pd.read_csv(base_path + '\\boone_qb_' + date_to_use + '.csv')
+dfd_rb
 dfd_qb.rename(columns={'1QB': 'PPR'}, inplace=True)
 boone_list = [dfd_rb[['PLAYER', 'PPR']], dfd_wr[['PLAYER', 'PPR']], dfd_te[['PLAYER', 'PPR']],
               dfd_qb[['PLAYER', 'PPR']]]
 
 
 
-# df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv')#, encoding='windows-1254')
 
 df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', index_col=[0])#, encoding='windows-1254')
-
 
 df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', index_col=[0])
 df_dict["wolf"].reset_index(inplace=True)
