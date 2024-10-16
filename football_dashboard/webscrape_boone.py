@@ -61,6 +61,10 @@ for position, position_name in positions.items():
         df = pd.DataFrame(data, columns=headers)
 
         # Step 9: Save to CSV or print the DataFrame
+        if position == 'qb':
+            df.rename(columns={'1QB':'PPR'}, inplace=True)
+        df.columns = df.columns.str.upper()
+        df = df[['PLAYER', 'PPR']]
         df.to_csv(f'{base_path}boone_{position}_{today_date}.csv', index=False)
 
     # Display the DataFrame

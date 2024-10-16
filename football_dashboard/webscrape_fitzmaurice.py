@@ -47,8 +47,22 @@ def scrape_fantasy_rankings(expert_name, url):
         today_date = date.today().strftime("%Y-%m-%d").replace("-", "_")
         base_path = 'C:/Users/16028/OneDrive/Documents/football_analytics/'
         filename = f"{base_path}{expert_name}_{today_date}.csv"
+        # Replace unwanted characters in column names
+        rankings_df.columns = rankings_df.columns.str.replace('[^A-Za-z0-9_]+', '', regex=True)
 
-        # Save the DataFrame to a CSV file
+        # Rename the columns
+        rankings_df = rankings_df.rename(columns={
+            'Rank': 'rank',
+            'Player': 'name',
+            'Pos': 'pos',
+            'Team': 'team',
+            'Bye': 'bye_week',
+            'ECR': 'ecr',
+            'vsECR': 'vs_ecr'
+        })
+
+        # Drop the columns 'ADP' and 'vsADP'
+        rankings_df = rankings_df.drop(columns=['ADP', 'vsADP'])
         rankings_df.to_csv(filename, index=False, mode='w')
         print(f"Rankings saved to {filename}")
 
@@ -66,10 +80,9 @@ df = scrape_fantasy_rankings(expert, url)
 print(df.head())  
 
 
+expert = "the_wolf"
+url = "https://www.fantasypros.com/nfl/rankings/wolf-of-roto-street.php?position=ALL&type=ros&scoring=HALF"
 
 
-
-
-df.columns
-
-
+df = scrape_fantasy_rankings(expert, url)
+print(df.head(20))  

@@ -29,96 +29,26 @@ ecr_weight = .17 #23
 wolf_weight = .21 # 26
 fitz_weight = .08 #decay this now--check week-to-week change. likely not updating
 boone_weight = .26 #.26
-e_q_weight = .17 # this is the weaker ecr
-jahnke_weight = 0
-ratcliffe_weight = 0 # was .14, make higher now that year almost over
+e_q_weight = .17 # this is the weaker_ecr weight
 
 
 
 base_path = r'C:\Users\16028\OneDrive\Documents\football_analytics'
 
-
-# df_dict["boone"][:22]
-# wolf['name'] = wolf['name'].str.replace("[\(\[].*?[\)\]]", "", regex=True)
-
-
-# date_old_to_use = "12_6"
 dfd_rb = pd.read_csv(base_path + '\\boone_rb_' + boone_date_to_use + '.csv')
 dfd_wr = pd.read_csv(base_path + '\\boone_wr_' + boone_date_to_use + '.csv')
 dfd_te = pd.read_csv(base_path + '\\boone_te_' + boone_date_to_use + '.csv')
 dfd_qb = pd.read_csv(base_path + '\\boone_qb_' + boone_date_to_use + '.csv')
 
 
-dfd_rb
-dfd_qb.rename(columns={'1QB': 'PPR'}, inplace=True)
-boone_list = [dfd_rb[['PLAYER', 'PPR']], dfd_wr[['PLAYER', 'PPR']], dfd_te[['PLAYER', 'PPR']],
-              dfd_qb[['PLAYER', 'PPR']]]
 
+boone_list = [dfd_rb, dfd_wr, dfd_te,dfd_qb]
 
-
-
-df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', index_col=[0])#, encoding='windows-1254')
-
-df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', index_col=[0])
-df_dict["wolf"].reset_index(inplace=True)
-def extractTier(x):
-    if len(x) > 3:
-        return x
-    else:
-        return np.nan
-
-# len(df_dict["wolf"]["ranking"].loc[0])
-df_dict["wolf"]["tier"] = df_dict["wolf"]["ranking"].apply(extractTier)
-df_dict["wolf"]["tier"].fillna(method="ffill", inplace=True)
-df_dict["wolf"].dropna(axis=0, thresh=3, inplace=True)
-df_dict["wolf"]["ranking"] = df_dict["wolf"]["ranking"].astype(int)
-
-
-# df_dict["wolf"].columns
-# df_dict["wolf"].iloc[1,:]
-# df_dict["wolf"].index
-# df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', encoding='windows-1254')
-an = df_dict['wolf']
-df_dict['wolf'] = df_dict['wolf'][df_dict['wolf']['name'].notna()]# = df[df['EPS'].notna()]
-df_dict['wolf'].rename(columns={'ranking':'rank'}, inplace=True)
-
-
-
-# df_dict["wolf"]
-##########################################################
-wtemp = df_dict["wolf"].copy()
-
-wtemp["tier"] = wtemp["tier"].astype(str)  # Convert "tier" to string type if needed
-wtemp["rank"] = wtemp["rank"].astype(float)  # Convert "rank" to float type if needed
-# wtemp[["name", "rank", "new_rating"]][-50:]
-
-wolf_tiers = df_dict["wolf"].groupby("tier")["rank"].mean()
-wolf_tiers_dict = wolf_tiers.to_dict()
-wtemp["tier_avg"] = wtemp["tier"].map(wolf_tiers_dict)
-wtemp["rank"] = wtemp["rank"]*.8 + wtemp["tier_avg"]*.2
-df_dict["wolf"] = wtemp
-##########################################################
-df_dict['wolf']['name'] = df_dict['wolf']['name'].str.replace("[\(\[].*?[\)\]]", "",regex=True)
-df_dict['wolf'] = df_dict['wolf'][['rank', 'name', 'pos', 'bye', 'ecr', 'vs_ecr']]
-
-
-# data = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv', encoding='windows-1254')
-# data = data[['ranking', 'name', 'pos', 'bye', 'ecr', 'vs_ecr']]
-# data.dropna(inplace=True)
-# data.rename(columns={'ranking':'rank'}, inplace=True)
-
-# df_dict['wolf'].dropna(inplace=True)
 
 #gonna have to delete stuff with the team names in parentheses
 # as does the wolf
 # fitz gets a little extra
 # jahnke gets a downgrade
-
-# for data in boone_list:
-#     print(data.head())
-#     data = data[['PLAYER', 'PPR']].copy()
-#     data.columns = data.columns.str.lower()
-
 
 dfd = pd.concat(boone_list)
 dfd['rank_boone'] = dfd['PPR'].rank(method='average', ascending=False)
@@ -129,17 +59,13 @@ dfd['name'] = dfd['name'].str.strip()
 dfd['name'] = dfd['name'].str.lower()
 
 
-
-
-# myguy = jeff.concat(jeff_qb)
-
- # was 2022
  
-ecr = pd.read_csv(r'C:\Users\16028\OneDrive\Documents\football_analytics\FantasyPros_2023_Ros_ALL_Rankings_' +
+ecr = pd.read_csv(r'C:\Users\16028\OneDrive\Documents\football_analytics\FantasyPros_2024_Ros_ALL_Rankings_' +
                   date_to_use +'.csv')
+ecr
 ecr.rename(columns={'PLAYER NAME': 'name', 'RK': 'rank'}, inplace=True)
 df_dict['ecr'] = ecr.copy()
-ecr
+
 
 
 weaker_ecr = pd.read_csv(r'C:\Users\16028\OneDrive\Documents\football_analytics\weaker_ecr_' + date_to_use +'.csv')
@@ -149,130 +75,35 @@ weaker_ecr['SOS PLAYOFFS'] = weaker_ecr['SOS PLAYOFFS'].astype(str).str[0]
 df_dict['weaker_ecr'] = weaker_ecr.copy()
 weaker_ecr
 
-###
-jeff_qb = pd.read_csv(base_path + '\\ratcliffe_qb_' + ratcliffe_date_to_use + '.csv')
-df_dict['jeff'] = pd.read_csv(base_path + '\\ratcliffe_flex_' + ratcliffe_date_to_use + '.csv')
-jeff = df_dict['jeff'].copy()
-###
-df_dict['nj'] = pd.read_csv(base_path + '\\jahnke_' + date_to_use + '.csv')
+
 df_dict['fitz'] = pd.read_csv(base_path + '\\fitzmaurice_' + date_to_use + '.csv')
-# df_dict['free'] = pd.read_csv(base_path + '\\freedman_' + date_to_use + '.csv')
-
-df_list =[ df_dict['jeff'], df_dict['nj'], df_dict['fitz'], dfd]
-
-df_dict['fitz'].rename(columns={'player':'name'}, inplace=True)
 df_dict['fitz'] = df_dict['fitz'][['rank', 'name','pos', 'team', 'bye_week',
                                'ecr', 'vs_ecr']]
-# df_dict['free'] = df_dict['free'][['rank', 'name','pos', 'team', 'bye_week',
-#                                'ecr', 'vs_ecr']]
 
-# df_dict['fitz'] = df_dict['fitz'][['rank', 'name','pos', 'team', 'bye_week',
-#                                'ecr']]
+df_dict['wolf'] = pd.read_csv(base_path + '\\the_wolf_' + date_to_use + '.csv')
+df_dict['wolf'] = df_dict['wolf'][['rank', 'name','pos', 'team', 'bye_week',
+                               'ecr', 'vs_ecr']]
+
+df_dict['fitz']['pos'] = df_dict['fitz']['pos'].str[:2]
+df_dict['wolf']['pos'] = df_dict['wolf']['pos'].str[:2]
 
 df_dict['boone'] = dfd.copy()
-
-
-# df_dict['jeff'] = df_dict['jeff'].rename(columns={'jeff':'rank'})
-# df_dict['jeff'] = df_dict['jeff'].rename(columns={'player':'name'})
-# df_dict['jeff'].drop(columns=['average rank'], inplace=True)
-# df_dict['jeff']
-
-df_dict['jeff']
-
-# df_dict['jeff']
-# df_dict['boone']
-# df_dict['wolf']
-df_dict['jeff'].rename(columns={'Player':'name'}, inplace=True)
-df_dict['jeff'].rename(columns={'Average Rank':'rank'}, inplace=True)
-# df_dict['jeff']
-# ra
-df_dict['jeff'] = df_dict['jeff'][['rank', 'name', 'Position', 'Team', 'Jeff']]
 for k,v in df_dict.items():
-    print(k)
-    v.dropna(inplace=True)
-    v.columns = v.columns.str.lower()
-    v['name'] = v['name'].str.strip()
-    v['name'] = v['name'].str.lower()
-    # print(v['name'])
-    v['name'] = '|'.join(v['name'].tolist()).translate(transtab).split('|')
-    # v['name'] = ' '.join(v['name'].str.split()[:2])
-    # ' '.join(v['name'].str.split()[:2])
-    v['name'] = v['name'].str.split(' ').str[0] + ' ' + v['name'].str.split(' ').str[1]
-    v.rename(columns={'rank':'rank_' + k}, inplace=True)
-    # v['name'] = [p.sub('', x) for x in v['name'].tolist()]
-    print(v.head())
-    
-   
-
-for k,v in df_dict.items():
-    print(v.columns)    
-    
-# df_dict['jeff'].columns
-# ' '.join('travis etienne jr'.split()[:2])
+    print(k.upper())
+    print(v.columns)
+    print('\n') 
 
 
 
-# ' '.join(v['name'].str.split()[:2])
-
-
-# 'travis etienne jr'.split()[:2]
-df_dict["wolf"]
-
-
-
-
-
-dfb = df_dict['nj'].copy()
 dfc = df_dict['fitz'].copy()
-dfd = df_dict['boone'].copy()
 dfe = df_dict['ecr'].copy()
-
-
-# dfz = df_dict['free'].copy()
-
-
 
 
 qb_list = ['geno smith', 'derek carr', 'aaron rodgers', 'justin fields', 'justin herbert',
            'josh allen', 'joe burrow', 'jalen hurts', 'lamar jackson', 'tua tagovailoa', 'tom brady', 'dak prescott',
-            'kirk cousins', 'matthew stafford', 'jared goff', 'kyler murray']# 'daniel jones'] #'trevor lawrence']
-
-# valuation = 0
-# for qb_name in qb_list:
-#     valuation = 0
-#     for k,v in df_dict.items():
-#         # print(k)
-#         # print(v[v['name'] == qb_name]['rank_' + k])
-#         if k != 'jeff':
-#             valuation += int(v[v['name'] == qb_name]['rank_' + k].item())
-#     print(qb_name + ': '+ str(valuation/4))
-#     # print(valuation/4)
-
-# d[d['name'] == 'geno smith']
-
-# df_dict['wolf'][df_dict['wolf']['name'] == 'geno smith']['rank_wolf'].item()
-# dfb[dfb['name'] == 'gabe davis'] 
-dfb['name'] = dfb['name'].apply(lambda x: 'gabe davis' if x == 'gabriel davis' else x )
-df_dict['nj']['name'] = df_dict['nj']['name'].apply(lambda x: 'gabe davis' if x == 'gabriel davis' else x )
-
-# dfe = df_dict['nj2'].copy()
-# dff = df_dict['fitz2'].copy()
-# swift, amon ra st. brown
-# drake london?
-#ezekiel elliot?
-# mitchell?
-
-dfd.reset_index(inplace=True)
+            'kirk cousins', 'matthew stafford', 'jared goff', 'kyler murray']
 
 
-# df[df['name'] == 'gabe davis']
-
-
-# dfa
-# df = pd.concat([dfa,dfb,dfc], keys='name')
-# df_pair = dfa.merge(df_dict['nj'], how='inner', left_on='name', right_on = 'name', suffixes = ('_jeff', '_nj'))
-
-df_dict["wolf"].dtypes
 # half PPR to PPR adjustment
 def update_dataframe(data, position_column_name, column_to_modify):
     # Define the conditions
@@ -282,23 +113,14 @@ def update_dataframe(data, position_column_name, column_to_modify):
     # Apply the conditions to update the 'rank_jeff' column
     data.loc[condition_1, column_to_modify] *= 0.875 #| condition_2,
 
-# df_dict['jeff']
-# df_dict['wolf']
-# Update the 'rank_jeff' column for the 'jeff' DataFrame
-update_dataframe(df_dict['jeff'], "position", "rank_jeff")
-# Update the 'rank_jeff' column for the 'jeff' DataFrame
-update_dataframe(df_dict['wolf'], "pos", "rank_wolf")
 
-df_dict['jeff']
+# Update the 'rank_jeff' column for the 'wolf' DataFrame
+update_dataframe(df_dict['wolf'], "pos", "rank")
 
-dfa = df_dict['jeff'].copy()
 dfw = df_dict['wolf'].copy()
-
-dfa.rename(columns={'Player':'name'}, inplace=True)
 
 
 # Print the updated DataFrame
-print(df_dict['jeff'])
 print(df_dict['wolf'])
 
 merge_style = 'left'
@@ -311,17 +133,9 @@ df_seis = df_cinco.merge(df_dict['nj'], how=merge_style, left_on='name', right_o
 df_siete = df_seis.merge(df_dict['ecr'], how=merge_style, left_on='name', right_on='name', suffixes=('_cinco', '_ecr'))
 df_ocho = df_siete.merge(df_dict['weaker_ecr'], how=merge_style, left_on='name', right_on='name', 
                          suffixes=('_siete', '_weaker_ecr'))
-# df_nueve = df_ocho.merge(df_dict['free'], how=merge_style, left_on='name', right_on='name', 
-#                          suffixes=('_ocho', '_free'))
+
 df = df_ocho.copy()
 df_ocho['rank_jeff']
-# df_ocho[df_ocho['name']=='kyle pitts']
-
-
-# df_cinco['kyle pitts']
-# df = df_cinco.copy()
-
-# df_dict['fitz']
 
 ####################
 # df = df[df['rank_wolf'].notna()]
@@ -439,16 +253,12 @@ df['pos_rank'] = df.groupby('pos_name').cumcount() + 1
 df['new_pos_rank'] = df['pos_name'] + df['pos_rank'].astype(str)
 df.drop(columns=['pos_quad', 'pos_rank'], inplace=True)
 df.index = df.index + 1
-
-
 temp = df[['name', 'avg_rank']]
 
-# jeff = df_dict['jeff']
 
 
 
 
-print(6)
 
 trade_left_side = ['aj dillon', 'devonta smith', 'eno benjamin']
 trade_right_side = ['keenan allen', 'cam akers']
